@@ -1,0 +1,61 @@
+@startuml
+
+class File {
+'sealed class
+string name
+string route
+}
+
+class document extends File {
+}
+
+class Directory extends File {
+File parent
+File[] content
+}
+
+class CommandProcessor {
+Directory root
+Directory position
+void TakeCommand(string input)
+}
+
+interface Command {
+void execute()
+}
+
+class List implements Command {
+Directory dir
+string ord
+}
+
+class ChangeDir implements Command {
+Directory dir
+string route
+}
+
+class Touch implements Command {
+Directory dir
+string name
+}
+
+class MakeDir implements Command {
+Directory dir
+string name
+}
+
+class Remove implements Command {
+Directory dir
+string name
+bool recursive
+}
+
+class PrintDir implements Command {
+Directory dir
+}
+
+CommandProcessor ..> File
+Command ..> File
+CommandProcessor ..> Command
+
+@enduml
