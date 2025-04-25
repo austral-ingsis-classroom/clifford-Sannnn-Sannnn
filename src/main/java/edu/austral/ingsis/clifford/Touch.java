@@ -2,16 +2,18 @@ package edu.austral.ingsis.clifford;
 
 public class Touch implements Command {
 
+  private final Filesystem filesystem;
   private final Directory dir;
   private final String filename;
 
-  public Touch(Directory dir, String filename) {
-    this.dir = dir;
+  public Touch(Filesystem filesystem, String filename) {
+    this.filesystem = filesystem;
+    this.dir = filesystem.getPos();
     this.filename = filename;
   }
 
-  public void execute() {
-    dir.createDoc(filename);
+  public InmutableResponse execute() {
+    return filesystem.addDocument(dir.path(), filename);
   }
 
 }

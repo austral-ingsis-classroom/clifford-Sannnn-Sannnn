@@ -1,17 +1,19 @@
 package edu.austral.ingsis.clifford;
 
 public class MakeDir implements Command {
-  
+
+  private final Filesystem filesystem;
   private final String filename;
   private final Directory dir;
   
-  public MakeDir(Directory dir, String filename) {
-    this.dir = dir;
+  public MakeDir(Filesystem filesystem, String filename) {
+    this.filesystem = filesystem;
+    this.dir = filesystem.getPos();
     this.filename = filename;
   }
   
-  public void execute() {
-    dir.createDir(filename);
+  public InmutableResponse execute() {
+    return filesystem.addDirectory(dir.path(), filename);
   }
   
 }

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import java.util.Map;
+
+import edu.austral.ingsis.clifford.FileSystemRunner;
 import org.junit.jupiter.api.Test;
 
 public class FileSystemTests {

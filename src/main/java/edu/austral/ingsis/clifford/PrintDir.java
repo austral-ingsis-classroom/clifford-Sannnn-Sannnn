@@ -1,15 +1,19 @@
 package edu.austral.ingsis.clifford;
 
 public class PrintDir implements Command {
-  
+
+  private final Filesystem filesystem;
   private final Directory dir;
   
-  public PrintDir(Directory dir) {
-    this.dir = dir;
+  public PrintDir(Filesystem filesystem) {
+    this.filesystem = filesystem;
+    this.dir = filesystem.getPos();
   }
   
-  public void execute() {
-    System.out.println(dir.getRoute());
+  public InmutableResponse execute() {
+    Directory root = filesystem.getRoot();
+    String outputMessage = dir.path();
+    return new InmutableResponse(root, outputMessage);
   }
   
 }
