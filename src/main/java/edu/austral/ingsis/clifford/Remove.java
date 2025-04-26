@@ -21,16 +21,12 @@ public class Remove implements Command {
   public Remove(Filesystem filesystem, String[] parameters) {
     this.filesystem = filesystem;
     this.dir = filesystem.getPos();
-    this.filename = parameters[parameters.length - 1];
-    this.recursive = parameters.length != 1;
-  }
+    this.filename = parameters.length < 3 ? parameters[1] : parameters [2];
+    this.recursive = parameters.length > 2 && parameters[1].equals("--recursive");
+    };
   
   public InmutableResponse execute() {
-    if (recursive) {
-      return filesystem.removeDir(dir.path(), filename);
-    } else {
-      return filesystem.removeDoc(dir.path(), filename);
-    }
+    return filesystem.removeFile(dir.path(), filename, recursive);
   }
   
 }

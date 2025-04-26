@@ -18,30 +18,19 @@ public class CommandProcessor implements FileSystemRunner {
     InmutableResponse response;
     for (String singleInput : commands) {
       String[] input = singleInput.split(" ");
-      switch (input[0]) {
-        case "ls":
-          command = new ListDir(filesystem, input[1]);
-          break;
-        case "cd":
-          command = new Change(filesystem, input[1]);
-          break;
-        case "touch":
-          command = new Touch(filesystem, input[1]);
-          break;
-        case "mkdir":
-          command = new MakeDir(filesystem, input[1]);
-          break;
-        case "rm":
-          command = new Remove(filesystem, input);
-          break;
-        case "pwd":
-          command = new PrintDir(filesystem);
-          break;
-        default:
-          command = new EmptyCommand();
-      }
+      command = switch (input[0]) {
+        case "ls" -> new ListDir(filesystem, input);
+        case "cd" -> new ChangeDir(filesystem, input[1]);
+        case "touch" -> new Touch(filesystem, input[1]);
+        case "mkdir" -> new MakeDir(filesystem, input[1]);
+        case "rm" -> new Remove(filesystem, input);
+        case "pwd" -> new PrintDir(filesystem);
+        default -> new EmptyCommand();
+      };
       response = command.execute();
+      output.add(response.message());
     }
+    return output;
   }
 
 }

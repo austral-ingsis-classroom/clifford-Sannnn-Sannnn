@@ -14,7 +14,7 @@ public class Filesystem {
   }
 
   public Filesystem() {
-    this.root = new Directory("root", "/", new ArrayList<>());
+    this.root = new Directory("/", "", new ArrayList<>());
     this.position = this.root;
   }
 
@@ -22,8 +22,10 @@ public class Filesystem {
 
   public InmutableResponse addDirectory(String path, String filename) {
     List<String> appendPath = new ArrayList<>(List.of(path.split("/")));
+    appendPath.removeFirst(); // Remove first element -> empty string at the left of "/"
     InmutableResponse response = addDirectory(root, appendPath, filename);
     root = response.dir();
+    updatePosition();
     return response;
   }
 
@@ -60,8 +62,7 @@ public class Filesystem {
     } // Directory does not exist yet
     String outputMessage = "'" + filename + "' directory created";
     Directory newDir = current.createDir(
-        new Directory(filename, current.path() + "/" + current.name(), new ArrayList<>())
-    );
+        new Directory(filename, current.path() + "/" + filename, new ArrayList<>()));
     return new InmutableResponse(newDir, outputMessage);
   }
 
@@ -82,8 +83,10 @@ public class Filesystem {
 
   public InmutableResponse addDocument(String path, String filename) {
     List<String> appendPath = new ArrayList<>(List.of(path.split("/")));
+    appendPath.removeFirst();
     InmutableResponse response = addDocument(root, appendPath, filename);
     root = response.dir();
+    updatePosition();
     return response;
   }
 
@@ -104,7 +107,7 @@ public class Filesystem {
     } // Document does not exist yet
     String outputMessage = "'" + filename + "' file created";
     Directory newDir = current.createDoc(
-        new Document(filename, current.path()));
+        new Document(filename, current.path() + "/" + filename));
     return new InmutableResponse(newDir, outputMessage);
   }
 
@@ -123,40 +126,74 @@ public class Filesystem {
 
   // remove
 
-  // Directory
-
-  public InmutableResponse removeDir(String path, String filename) {
+  public InmutableResponse removeFile(String path, String filename, boolean recursive) {
     List<String> appendPath = new ArrayList<>(List.of(path.split("/")));
-    InmutableResponse response = removeDir(root, appendPath, filename);
+    appendPath.removeFirst();
+    InmutableResponse response = removeFile(root, appendPath, filename, recursive);
     root = response.dir();
+    updatePosition();
     return response;
   }
 
-  private InmutableResponse removeDir(Directory current, List<String> path, String filename) {
-    if (path.isEmpty()) {
-      return deleteDir(current, filename); // Create Document on current
+  private InmutableResponse removeFile(Directory current, List<String> path, String filename, boolean recursive) {
+    if (path.isEmpty() && recursive) {
+      return deleteDir(current, filename); // Remove file on current
+    } else if (path.isEmpty()) {
+      return deleteDoc(current, filename); // Remove document on file
     } // else continue searching
-    InmutableResponse response = continueDeleteDirPath(current, path, filename);
+    InmutableResponse response = continueRemovePath(current, path, filename, recursive);
     return new InmutableResponse(response.dir(), response.message());
   }
 
-  private InmutableResponse deleteDir(Directory current, String filename) {
-    for (File file : current.getFileList()) { // Check if there is a directory with the specified name
-      if (file.isDirectory() && file.name().equals(filename)) {
-        String outputMessage = "'" + filename + "' removed";
-        Directory newDir = current.removeDir(filename);
-        return new InmutableResponse(newDir, outputMessage);
-      }
-    } // Document does not exist
-    String outputMessage = "'" + filename + "' not found";
-    return new InmutableResponse(current, outputMessage);
+  private InmutableResponse deleteDir(Directory current, String filename) { // can remove directories and documents
+    File target = findFile(current, filename);
+    if (target == null) { // Document does not exist
+      String outputMessage = "'" + filename + "' not found";
+      return new InmutableResponse(current, outputMessage);
+    } else {
+      String outputMessage = "'" + filename + "' removed";
+      Directory newDir = current.removeDir(target);
+      return new InmutableResponse(newDir, outputMessage);
+    }
   }
 
-  private InmutableResponse continueDeleteDirPath(Directory current, List<String> path, String filename) {
+  private InmutableResponse deleteDoc(Directory current, String filename) { // Only removes documents
+    File target = findFile(current, filename);
+    if (target == null) { // Document does not exist
+      String outputMessage = "'" + filename + "' not found";
+      return new InmutableResponse(current, outputMessage);
+    }
+    return attemptDeleteDocument(current, target, filename);
+  }
+
+  private InmutableResponse attemptDeleteDocument(Directory current, File target, String filename) {
+    if (!target.isDirectory()) { // Delete document
+      String outputMessage = "'" + filename + "' removed";
+      Directory newDir = current.removeDoc(target);
+      return new InmutableResponse(newDir, outputMessage);
+    } else { // It's a directory -> cannot delete
+      String outputMessage = "cannot remove '" + filename + "', is a directory";
+      return new InmutableResponse(current, outputMessage);
+    }
+  }
+
+  private File findFile(Directory current, String filename) {
+    File output = null;
+    for (File file : current.getFileList()) { // Check if there is a file with the specified name
+      if (!file.isDirectory() && file.name().equals(filename)) { // Found possible target file
+        output = file;
+      } else if (file.isDirectory() && file.name().equals(filename)) {
+        return file;
+      }
+    }
+    return output;
+  }
+
+  private InmutableResponse continueRemovePath(Directory current, List<String> path, String filename, boolean recursive) {
     for (File file : current.getFileList()) { // Check next directory exists
       if (file.isDirectory() && file.name().equals(path.getFirst())) {
         path.removeFirst();
-        InmutableResponse response = removeDir((Directory) file, path, filename);
+        InmutableResponse response = removeFile((Directory) file, path, filename, recursive);
         Directory newDir = current.changeDir((Directory) file, response.dir());
         return new InmutableResponse(newDir, response.message());
       }
@@ -165,47 +202,68 @@ public class Filesystem {
     return new InmutableResponse(current, outputMessage);
   }
 
-  // Document
+  // Change Directory
 
-  public InmutableResponse removeDoc(String path, String filename) {
-    List<String> appendPath = new ArrayList<>(List.of(path.split("/")));
-    InmutableResponse response = removeDoc(root, appendPath, filename);
-    root = response.dir();
-    return response;
-  }
-
-  private InmutableResponse removeDoc(Directory current, List<String> path, String filename) {
-    if (path.isEmpty()) {
-      return deleteDoc(current, filename); // Create Document on current
-    } // else continue searching
-    InmutableResponse response = continueDeleteDocPath(current, path, filename);
-    return new InmutableResponse(response.dir(), response.message());
-  }
-
-  private InmutableResponse deleteDoc(Directory current, String filename) {
-    for (File file : current.getFileList()) { // Check if there is a document with the specified name
-      if (!file.isDirectory() && file.name().equals(filename)) {
-        String outputMessage = "'" + filename + "' removed";
-        Directory newDir = current.removeDoc(filename);
-        return new InmutableResponse(newDir, outputMessage);
+  /*
+  public InmutableResponse changeDir(List<String> path) {
+    position = root;
+    for (String directory : path) {
+      boolean found = false;
+      for (File file : position.getFileList()) { // Search for next directory
+        if (file.isDirectory() && file.name().equals(directory)) {
+          position = (Directory) file;
+          found = true;
+          break;
+        }
       }
-    } // Document does not exist
-    String outputMessage = "'" + filename + "' not found";
-    return new InmutableResponse(current, outputMessage);
+      if (!found) {
+        return new InmutableResponse(position, "'" + directory + "' directory does not exist");
+      }
+    }
+    return new InmutableResponse(position, "moved to directory '" + position.name() + "'");
+  }
+  */
+
+  public InmutableResponse changeDir(List<String> path) {
+    position = root;
+    for (String directory : path) { // Recursively search for next directory
+      InmutableResponse response = moveToDirectory(directory);
+      if (!response.message().startsWith("moved")) { // Next directory not found
+        return response;
+      }
+    } // Reached end of path
+    String outputMessage = "moved to directory '" + position.name() + "'";
+    return new InmutableResponse(position, outputMessage);
   }
 
-  private InmutableResponse continueDeleteDocPath(Directory current, List<String> path, String filename) {
-    for (File file : current.getFileList()) { // Check next directory exists
-      if (file.isDirectory() && file.name().equals(path.getFirst())) {
-        path.removeFirst();
-        InmutableResponse response = removeDoc((Directory) file, path, filename);
-        Directory newDir = current.changeDir((Directory) file, response.dir());
-        return new InmutableResponse(newDir, response.message());
+  private InmutableResponse moveToDirectory(String directory) {
+    for (File file : position.getFileList()) {
+      if (isMatchingDirectory(file, directory)) { // Found
+        position = (Directory) file;
+        return new InmutableResponse(position, "moved");
       }
-    } // Directory from path not found -> Stop
-    String outputMessage = "'" + path.getFirst() + "' directory not found";
-    return new InmutableResponse(current, outputMessage);
+    } // Not found
+    String outputMessage = "'" + directory + "' directory does not exist";
+    return new InmutableResponse(position, outputMessage);
   }
+
+  private boolean isMatchingDirectory(File file, String directory) {
+    return file.isDirectory() && file.name().equals(directory);
+  }
+
+  private void updatePosition() {
+    List<String> newPath = List.of(position.path().split("/"));
+    position = root;
+    for (String directory : newPath) {
+      for (File file : position.getFileList()) { // Search for next directory
+        if (file.isDirectory() && file.name().equals(directory)) {
+          position = (Directory) file;
+          break;
+        }
+      }
+    }
+  }
+
 
   // Misc
 

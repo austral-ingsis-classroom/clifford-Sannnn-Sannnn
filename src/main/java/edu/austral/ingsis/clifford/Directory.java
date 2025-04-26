@@ -31,10 +31,10 @@ public final class Directory extends File {
     return new Directory(name(), path(), newContents);
   }
 
-  public Directory removeDoc(String filename) {
+  public Directory removeDoc(File target) {
     List<File> newContents = new ArrayList<>(contents);
     for (File file : newContents) {
-      if (file.isDirectory() && file.name().equals(filename)) {
+      if (new FileComparator().compare(file, target) == 0) {
         newContents.remove(file);
         return new Directory(name(), path(), newContents);
       }
@@ -42,10 +42,10 @@ public final class Directory extends File {
     return this;
   }
   
-  public Directory removeDir(String filename) {
+  public Directory removeDir(File target) {
     List<File> newContents = new ArrayList<>(contents);
     for (File file : newContents) {
-      if (file.isDirectory() && file.name().equals(filename)) {
+      if (new FileComparator().compare(file, target) == 0) {
         newContents.remove(file);
         return new Directory(name(), path(), newContents);
       }
@@ -60,12 +60,12 @@ public final class Directory extends File {
     return new Directory(name(), path(), newContents);
   }
   
-  public ArrayList<File> getFileList() {
+  public List<File> getFileList() {
     return new ArrayList<>(contents);
   }
 
-  public ArrayList<String> getFileNames() {
-    ArrayList<String> output = new ArrayList<>();
+  public List<String> getFileNames() {
+    List<String> output = new ArrayList<>();
     for (File file : contents) {
       output.add(file.name());
     }

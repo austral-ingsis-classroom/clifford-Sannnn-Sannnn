@@ -1,5 +1,7 @@
 package edu.austral.ingsis.clifford;
 
+import java.util.Comparator;
+
 public sealed abstract class File permits Document, Directory {
 
   private final String name;
