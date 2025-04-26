@@ -1,9 +1,7 @@
 package edu.austral.ingsis.clifford;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
-import java.lang.StringBuilder;
+import java.util.List;
 
 public class ListDir implements Command {
 
@@ -42,5 +40,4 @@ public class ListDir implements Command {
     }
     return output.toString().strip(); // Delete last " "
   }
-
 }

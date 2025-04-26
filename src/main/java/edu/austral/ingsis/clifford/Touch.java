@@ -15,5 +15,4 @@ public class Touch implements Command {
   public InmutableResponse execute() {
     return filesystem.addDocument(dir.path(), filename);
   }
-
 }

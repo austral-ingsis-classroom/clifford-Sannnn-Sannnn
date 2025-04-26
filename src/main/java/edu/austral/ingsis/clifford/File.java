@@ -1,8 +1,6 @@
 package edu.austral.ingsis.clifford;
 
-import java.util.Comparator;
-
-public sealed abstract class File permits Document, Directory {
+public abstract sealed class File permits Document, Directory {
 
   private final String name;
   private final boolean isDir;
@@ -17,7 +15,7 @@ public sealed abstract class File permits Document, Directory {
   public String name() {
     return this.name;
   }
-  
+
   public boolean isDirectory() {
     return this.isDir;
   }
@@ -25,5 +23,4 @@ public sealed abstract class File permits Document, Directory {
   public String path() {
     return this.path;
   }
-
 }

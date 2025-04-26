@@ -16,7 +16,7 @@ public final class Directory extends File {
     super(name, path, true);
     this.contents = Collections.unmodifiableList(new ArrayList<>(contents));
   }
-  
+
   // Modify logic: Return copy of same Directory with modified copies of contents
 
   public Directory createDoc(Document doc) {
@@ -41,7 +41,7 @@ public final class Directory extends File {
     }
     return this;
   }
-  
+
   public Directory removeDir(File target) {
     List<File> newContents = new ArrayList<>(contents);
     for (File file : newContents) {
@@ -59,7 +59,7 @@ public final class Directory extends File {
     newContents.add(newDir);
     return new Directory(name(), path(), newContents);
   }
-  
+
   public List<File> getFileList() {
     return new ArrayList<>(contents);
   }
@@ -71,5 +71,4 @@ public final class Directory extends File {
     }
     return output;
   }
-
 }

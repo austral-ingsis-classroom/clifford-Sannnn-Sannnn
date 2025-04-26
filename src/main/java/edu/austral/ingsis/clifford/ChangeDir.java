@@ -1,8 +1,7 @@
 package edu.austral.ingsis.clifford;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 public class ChangeDir implements Command {
 
@@ -71,11 +70,14 @@ public class ChangeDir implements Command {
   private void updatePath(List<String> cdPath, List<String> desiredPath) {
     for (String dir : desiredPath) {
       switch (dir) {
-        case "." -> { /* do nothing */ }
-        case ".." -> { if (!cdPath.isEmpty()) cdPath.removeLast(); } // Go back or stay if in root
+        case "." -> {
+          /* do nothing */
+        }
+        case ".." -> {
+          if (!cdPath.isEmpty()) cdPath.removeLast();
+        } // Go back or stay if in root
         default -> cdPath.add(dir);
       }
     }
   }
-
 }
